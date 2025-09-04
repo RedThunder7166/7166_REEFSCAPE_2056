@@ -16,7 +16,7 @@ public class Controls {
     private static final Trigger resetGyroButtonTwo = controller.start();
 
     private static final Trigger climbButton = controller.povRight(); // bottom right paddle
-    private static final Trigger deployButton = controller.rightBumper();
+    private static final Trigger intakeDeployButton = controller.rightBumper();
 
     // TODO: this should probably instead be if we're in a coral state (CORAL_LOADED, CORAL_SCORE_*, or CORAL_SCORING_*)
     public static final Trigger l1Coral = l1Button.and(OurRobotState.isCoralInGripperTrigger);
@@ -37,12 +37,12 @@ public class Controls {
     public static final Trigger autoHome = autoHomeButton.and(resetGyroButtonTwo.negate());
     public static final Trigger resetGyro = resetGyroButtonOne.and(resetGyroButtonTwo);
 
-    private static final Trigger coralIntakeTrigger = deployButton.and(OurRobotState.isClimbOutTrigger.negate());
+    private static final Trigger coralIntakeTrigger = intakeDeployButton.and(OurRobotState.isClimbOutTrigger.negate());
 
     public static final Trigger deployIntake = coralIntakeTrigger.and(OurRobotState.isCoralInGripperTrigger.negate());
     public static final Trigger retractIntake = controller.leftBumper();
 
     public static final Trigger grabCoral = coralIntakeTrigger.and(OurRobotState.isCoralInGripperTrigger);
 
-    public static final Trigger deployClimb = deployButton.and(climbButton);
+    public static final Trigger deployClimb = intakeDeployButton.and(climbButton);
 }

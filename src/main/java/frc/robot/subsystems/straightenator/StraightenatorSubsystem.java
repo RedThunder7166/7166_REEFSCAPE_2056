@@ -26,7 +26,7 @@ public class StraightenatorSubsystem extends SubsystemBase {
     }
 
     public Command on() {
-        return runOnce(() -> m_io.on());
+        return runOnce(m_io::on);
     }
 
     private void scoreMechanismStateChangeCallback() {

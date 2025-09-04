@@ -28,6 +28,8 @@ public class ElevatorConstants {
 
     public static final double positionHome = distanceToMechanismPosition(Inches.of(0));
     public static final double positionGrab = distanceToMechanismPosition(Inches.of(0));
+    public static final double positionInitial = positionGrab;
+    public static final double positionArmClearance = positionHome - distanceToMechanismPosition(Inches.of(0.25));
 
     public static final double positionL1Coral = distanceToMechanismPosition(Inches.of(0));
     public static final double positionL1CoralDropped = distanceToMechanismPosition(Inches.of(0));
@@ -45,6 +47,9 @@ public class ElevatorConstants {
     public static final double positionL2Algae = distanceToMechanismPosition(Inches.of(0));
     public static final double positionL3Algae = distanceToMechanismPosition(Inches.of(0));
     public static final double positionAlgaeHome = distanceToMechanismPosition(Inches.of(0));
+
+    // arm degree > 90
+    public static final double positionArmFarNetClearance = distanceToMechanismPosition(Inches.of(30));
 
     public static final double pidP = 1;
     public static final double cruiseVelocity = 1;

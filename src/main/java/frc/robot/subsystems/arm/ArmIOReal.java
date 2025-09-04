@@ -17,6 +17,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.OurRobotState;
 
@@ -26,12 +27,15 @@ public class ArmIOReal implements ArmIO {
     private final DigitalInput m_gripperSensor = new DigitalInput(gripperSensorId);
 
     private final StatusSignal<Angle> m_pivotMotorPositionSignal = m_pivotMotor.getPosition();
+    private final StatusSignal<Current> m_pivotMotorCurrentSignal = m_pivotMotor.getSupplyCurrent();
+
+    private double m_pivotMotorTargetPosition = pivotPositionInitial;
 
     private final NeutralOut m_neutralRequest = new NeutralOut();
 
     private final DutyCycleOut m_gripperDutyCycleRequest = new DutyCycleOut(0d);
 
-    private final MotionMagicVoltage m_pivotPositionRequest = new MotionMagicVoltage(pivotPositionGrab);
+    private final MotionMagicVoltage m_pivotPositionRequest = new MotionMagicVoltage(m_pivotMotorTargetPosition);
 
     private boolean m_gripperCoralOn = false;
 
@@ -58,34 +62,50 @@ public class ArmIOReal implements ArmIO {
         tryUntilOk(5, () -> m_pivotMotor.getConfigurator().apply(pivotConfig));
         tryUntilOk(5, () -> m_gripperMotor.getConfigurator().apply(gripperConfig));
 
-        BaseStatusSignal.setUpdateFrequencyForAll(50d, m_pivotMotorPositionSignal);
+        BaseStatusSignal.setUpdateFrequencyForAll(50d, m_pivotMotorPositionSignal, m_pivotMotorCurrentSignal);
 
-        m_pivotMotor.setPosition(pivotPositionGrab);
+        m_pivotMotor.setPosition(m_pivotMotorTargetPosition);
     }
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
-        BaseStatusSignal.refreshAll(m_pivotMotorPositionSignal);
+        BaseStatusSignal.refreshAll(m_pivotMotorPositionSignal, m_pivotMotorCurrentSignal);
+
+        inputs.pivotMotorPositionRotations = m_pivotMotorPositionSignal.getValueAsDouble();
+        inputs.pivotTargetMotorPositionRotations = m_pivotMotorTargetPosition;
+        inputs.pivotMotorCurrentAmps = m_pivotMotorCurrentSignal.getValueAsDouble();
     }
 
     @Override
     public void periodic() {
-        boolean gripperSensorTripped = !m_gripperSensor.get();
-        if (m_gripperCoralOn && gripperSensorTripped)
-            gripperOff();
+        if (OurRobotState.getIsIdle()) {
+            m_pivotMotor.setControl(m_neutralRequest);
+            m_gripperMotor.setControl(m_neutralRequest);
+        } else {
+            boolean gripperSensorTripped = !m_gripperSensor.get();
+            if (m_gripperCoralOn && gripperSensorTripped)
+                gripperOff();
 
-        // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
-        OurRobotState.setIsCoralInGripper(gripperSensorTripped);
+            // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
+            OurRobotState.setIsCoralInGripper(gripperSensorTripped);
+        }
     }
 
     @Override
     public void pivotGoPosition(double position) {
-        m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(position));
+        // FIXME: ELEVATOR CLEARANCE
+        m_pivotMotorTargetPosition = position;
+        m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(m_pivotMotorTargetPosition));
     }
 
     @Override
     public boolean pivotIsAtPosition(double position) {
         return Math.abs(position - m_pivotMotorPositionSignal.getValueAsDouble()) <= pivotIsAtPositionThreshold;
+    }
+
+    @Override
+    public boolean pivotIsAtOrPastPosition(double position) {
+        return (m_pivotMotorPositionSignal.getValueAsDouble() - position) >= pivotIsAtPositionThreshold;
     }
 
     @Override

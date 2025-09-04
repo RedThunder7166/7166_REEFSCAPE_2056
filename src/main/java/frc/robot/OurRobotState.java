@@ -8,6 +8,16 @@ import java.util.List;
 import java.util.Set;
 
 public class OurRobotState {
+    private static boolean isIdle = true;
+
+    public static boolean getIsIdle() {
+        return isIdle;
+    }
+
+    public static void setIsIdle(boolean value) {
+        isIdle = value;
+    }
+
     public static enum ScoreMechanismState {
         HOME,
         CORAL_INTAKE,
@@ -198,6 +208,28 @@ public class OurRobotState {
     }
 
     public static final Trigger isDeployingIntakeTrigger = new Trigger(OurRobotState::getIsDeployingIntake);
+
+
+    private static boolean isElevatorAboveArmClearance = false;
+
+    public static boolean getIsElevatorAboveArmClearance() {
+        return isElevatorAboveArmClearance;
+    }
+
+    public static void setIsElevatorAboveArmClearance(boolean value) {
+        isElevatorAboveArmClearance = value;
+    }
+
+
+    private static boolean isArmPastFarNetClearance = false;
+
+    public static boolean getIsArmPastFarNetClearance() {
+        return isArmPastFarNetClearance;
+    }
+
+    public static void setIsArmPastFarNetClearance(boolean value) {
+        isArmPastFarNetClearance = value;
+    }
 
 
     private static boolean isCoralHolderFirstSensorTripped = false;

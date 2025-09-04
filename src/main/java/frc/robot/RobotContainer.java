@@ -62,7 +62,6 @@ public class RobotContainer {
     private final Drive m_drive;
     private final GroundIntakeSubsystem m_groundIntakeSubsystem;
     private final StraightenatorSubsystem m_straightenatorSubsystem;
-    @SuppressWarnings("unused")
     private final ElevatorSubsystem m_elevatorSubsystem;
     private final ArmSubsystem m_armSubsystem;
 
@@ -189,43 +188,44 @@ public class RobotContainer {
          *
          */
 
-        Controls.l1Coral.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L1));
-        Controls.l2Coral.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L2));
-        Controls.l3Coral.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L3));
-        Controls.l4Coral.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L4));
+        Controls.l1Coral.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L1)));
+        Controls.l2Coral.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L2)));
+        Controls.l3Coral.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L3)));
+        Controls.l4Coral.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L4)));
 
-        Controls.score.onTrue(OurRobotState.scoreCommand);
-        Controls.l2Algae.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L2));
-        Controls.l3Algae.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L3));
-        Controls.algaePickupFloor.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_FLOOR));
+        Controls.score.onTrue(setIdleFalse().andThen(OurRobotState.scoreCommand));
+        Controls.l2Algae.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L2)));
+        Controls.l3Algae.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L3)));
+        Controls.algaePickupFloor.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_FLOOR)));
 
-        Controls.processor.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_PROCESSOR));
-        Controls.net.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_NET));
+        Controls.processor.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_PROCESSOR)));
+        Controls.net.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_NET)));
 
-        Controls.homeButton.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.HOME));
+        Controls.homeButton.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.HOME)));
 
-        Controls.deployIntake.onTrue(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_INTAKE));
-        Controls.retractIntake.onTrue(
-                m_groundIntakeSubsystem.retract());
+        Controls.deployIntake.onTrue(setIdleFalse().andThen(
+                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_INTAKE)));
+        Controls.retractIntake.onTrue(setIdleFalse().andThen(
+                m_groundIntakeSubsystem.retract()));
 
-        Controls.grabCoral.onTrue(grabCoral());
+        Controls.grabCoral.onTrue(setIdleFalse().andThen(grabCoral()));
 
-        Controls.deployClimb.onTrue(
-                Commands.runOnce(
-                        () -> {
-                            OurRobotState.deployClimb();
-                        }));
+        // TODO: we need this to be in a subsystem, obviously
+        // Controls.deployClimb.onTrue(setIdleFalse().andThen(
+        //         Commands.runOnce(
+        //                 () -> {
+        //                     OurRobotState.deployClimb();
+        //                 })));
     }
 
     /**
@@ -235,6 +235,10 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         return autoChooser.get();
+    }
+
+    private Command setIdleFalse() {
+        return Commands.runOnce(() -> OurRobotState.setIsIdle(false));
     }
 
     private Command grabCoral() {

@@ -33,8 +33,8 @@ public class ArmConstants {
         return angle.in(Degrees) / 360d;
     }
 
-    // TODO: this value; 81 from horizontal, so should be 9
-    public static final double pivotPositionGrab = pivotAngleToMechanismPosition(Degrees.of(0d));
+    public static final double pivotPositionGrab = pivotAngleToMechanismPosition(Degrees.of(-81));
+    public static final double pivotPositionInitial = pivotPositionGrab;
 
     public static final double pivotPositionL1Coral = pivotPositionGrab;
     public static final double pivotPositionL2Coral = pivotPositionGrab;
@@ -49,6 +49,10 @@ public class ArmConstants {
 
     public static final double pivotPositionNet = pivotPositionGrab;
     public static final double pivotPositionProcessor = pivotPositionGrab;
+    // the elevator should not go down when the arm pivot degree >= this point
+    public static final double pivotPositionFarNetClearance = pivotAngleToMechanismPosition(Degrees.of(90));
+    // for when we target net on the opposite side of the robot front
+    public static final double pivotPositionFarNet = pivotPositionGrab;
 
     public static final double pidP = 1;
     public static final double cruiseVelocity = 1;

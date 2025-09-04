@@ -23,6 +23,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         m_io.updateInputs(m_inputs);
+        OurRobotState.setIsElevatorAboveArmClearance(m_io.isAtOrAbovePosition(positionArmClearance));
     }
 
     public Command goPosition(double position) {

@@ -24,6 +24,7 @@ public class ArmSubsystem extends SubsystemBase {
     public void periodic() {
         m_io.periodic();
         m_io.updateInputs(m_inputs);
+        OurRobotState.setIsArmPastFarNetClearance(m_io.pivotIsAtOrPastPosition(pivotPositionFarNetClearance));
     }
 
     private void scoreMechanismStateChangeCallback() {

@@ -7,11 +7,14 @@ package frc.robot.subsystems.elevator;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim implements ElevatorIO {
-    private double m_targetPosition = positionGrab;
+    private double m_targetPosition = positionInitial;
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-
+        // :(
+        inputs.targetMotorPositionRotations = m_targetPosition;
+        inputs.leadMotorPositionRotations = m_targetPosition;
+        inputs.followerMotorPositionRotations = m_targetPosition;
     }
 
     @Override
@@ -21,5 +24,10 @@ public class ElevatorIOSim implements ElevatorIO {
     @Override
     public boolean isAtPosition(double position) {
         return m_targetPosition == position;
+    }
+
+    @Override
+    public boolean isAtOrAbovePosition(double position) {
+        return m_targetPosition >= position;
     }
 }

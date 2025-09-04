@@ -4,4 +4,6 @@ This is the repository for Red Thunder Robotics' Reefscape offseason robot. We b
 
 This was written by one Senior on the team. I have yet to learn AdvantageKit so simulation and such is lacking.
 
-AdvantageKit's swerve project's formatting plugin made me angry. I am not caring about licenses in files so they're super inconsistent.
+This is based directly off of AdvantageKit's example swerve drive project.
+
+The formatting plugin made me angry. I am not caring about licenses in files so they're super inconsistent.

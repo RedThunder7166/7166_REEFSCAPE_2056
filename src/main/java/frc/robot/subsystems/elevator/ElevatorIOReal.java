@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.elevator;
 
+import static frc.robot.subsystems.arm.ArmConstants.pivotIsAtPositionThreshold;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -17,12 +18,20 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
+import frc.robot.OurRobotState;
 
 public class ElevatorIOReal implements ElevatorIO {
     private final TalonFX m_leaderMotor = new TalonFX(leaderMotorId);
     private final TalonFX m_followerMotor = new TalonFX(followerMotorId);
 
     private final StatusSignal<Angle> m_leaderMotorPositionSignal = m_leaderMotor.getPosition();
+    private final StatusSignal<Current> m_leaderMotorCurrentSignal = m_leaderMotor.getSupplyCurrent();
+
+    private final StatusSignal<Angle> m_followerMotorPositionSignal = m_followerMotor.getPosition();
+    private final StatusSignal<Current> m_followerMotorCurrentSignal = m_followerMotor.getSupplyCurrent();
+
+    private double m_motorTargetPosition = positionInitial;
 
     private final NeutralOut m_neutralRequest = new NeutralOut();
     private final MotionMagicVoltage m_positionRequest = new MotionMagicVoltage(positionHome);
@@ -52,10 +61,10 @@ public class ElevatorIOReal implements ElevatorIO {
         tryUntilOk(5, () -> m_leaderMotor.getConfigurator().apply(leaderConfig));
         tryUntilOk(5, () -> m_followerMotor.getConfigurator().apply(followerConfig));
 
-        BaseStatusSignal.setUpdateFrequencyForAll(50d, m_leaderMotorPositionSignal);
+        BaseStatusSignal.setUpdateFrequencyForAll(50d, m_leaderMotorPositionSignal, m_leaderMotorCurrentSignal, m_followerMotorPositionSignal, m_followerMotorCurrentSignal);
 
-        m_leaderMotor.setPosition(positionGrab);
-        m_followerMotor.setPosition(positionGrab);
+        m_leaderMotor.setPosition(m_motorTargetPosition);
+        m_followerMotor.setPosition(m_motorTargetPosition);
 
         // FIXME: how does MotorOutput.Inverted affect opposes (or likely the other way around)?
         m_followerMotor.setControl(new Follower(m_leaderMotor.getDeviceID(), followerInverted != leaderInverted));
@@ -63,7 +72,21 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        BaseStatusSignal.refreshAll(m_leaderMotorPositionSignal);
+        BaseStatusSignal.refreshAll(m_leaderMotorPositionSignal, m_leaderMotorCurrentSignal, m_followerMotorPositionSignal, m_followerMotorCurrentSignal);
+
+        inputs.targetMotorPositionRotations = m_motorTargetPosition;
+
+        inputs.leadMotorPositionRotations = m_leaderMotorPositionSignal.getValueAsDouble();
+        inputs.leadMotorCurrentAmps = m_leaderMotorCurrentSignal.getValueAsDouble();
+
+        inputs.followerMotorPositionRotations = m_followerMotorPositionSignal.getValueAsDouble();
+        inputs.followerMotorCurrentAmps = m_followerMotorCurrentSignal.getValueAsDouble();
+    }
+
+    @Override
+    public void periodic() {
+        if (OurRobotState.getIsIdle())
+            m_leaderMotor.setControl(m_neutralRequest);
     }
 
     @Override
@@ -79,5 +102,10 @@ public class ElevatorIOReal implements ElevatorIO {
     @Override
     public boolean isAtPosition(double position) {
         return Math.abs(position - m_leaderMotorPositionSignal.getValueAsDouble()) <= isAtPositionThreshold;
+    }
+
+    @Override
+    public boolean isAtOrAbovePosition(double position) {
+        return (m_leaderMotorPositionSignal.getValueAsDouble() - position) >= pivotIsAtPositionThreshold;
     }
 }

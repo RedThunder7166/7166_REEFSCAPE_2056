@@ -26,10 +26,11 @@ public class GroundIntakeSubsystem extends SubsystemBase {
     }
 
     public Command retract() {
-        return runOnce(() -> {
-            m_io.retract();
-            m_io.stopRoller();
-        });
+        return OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.HOME)
+            .andThen(runOnce(() -> {
+                m_io.stopRoller();
+                m_io.retract();
+            }));
     }
 
     private void scoreMechanismStateChangeCallback() {

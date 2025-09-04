@@ -4,14 +4,16 @@
 
 package frc.robot.subsystems.arm;
 
-import static frc.robot.subsystems.elevator.ElevatorConstants.positionGrab;
+import static frc.robot.subsystems.arm.ArmConstants.*;
 
 public class ArmIOSim implements ArmIO {
-    private double m_pivotTargetPosition = positionGrab;
+    private double m_pivotTargetPosition = pivotPositionInitial;
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
-
+        // :(
+        inputs.pivotMotorPositionRotations = m_pivotTargetPosition;
+        inputs.pivotTargetMotorPositionRotations = m_pivotTargetPosition;
     }
 
     @Override
@@ -22,5 +24,10 @@ public class ArmIOSim implements ArmIO {
     @Override
     public boolean pivotIsAtPosition(double position) {
         return m_pivotTargetPosition == position;
+    }
+
+    @Override
+    public boolean pivotIsAtOrPastPosition(double position) {
+        return m_pivotTargetPosition >= position;
     }
 }
