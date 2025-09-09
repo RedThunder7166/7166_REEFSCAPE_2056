@@ -31,48 +31,62 @@ public class ArmSubsystem extends SubsystemBase {
         switch (OurRobotState.getScoreMechanismState()) {
             case HOME:
                 m_io.pivotGoPosition(pivotPositionGrab);
+                m_io.gripperOff();
                 break;
             case CORAL_INTAKE:
             // case CORAL_LOADED:
+                m_io.gripperOff();
                 break;
 
-            case CORAL_SCORE_L1:
             case CORAL_SCORING_L1:
+                m_io.gripperReverse();
+            case CORAL_SCORE_L1:
                 m_io.pivotGoPosition(pivotPositionL1Coral);
                 break;
-            case CORAL_SCORE_L2:
+
             case CORAL_SCORING_L2:
+                m_io.gripperReverse();
+            case CORAL_SCORE_L2:
                 m_io.pivotGoPosition(pivotPositionL2Coral);
                 break;
-            case CORAL_SCORE_L3:
+
             case CORAL_SCORING_L3:
+                m_io.gripperReverse();
+            case CORAL_SCORE_L3:
                 m_io.pivotGoPosition(pivotPositionL3Coral);
                 break;
-            case CORAL_SCORE_L4:
+
             case CORAL_SCORING_L4:
+                m_io.gripperReverse();
+            case CORAL_SCORE_L4:
                 m_io.pivotGoPosition(pivotPositionL4Coral);
                 break;
 
             case ALGAE_PICKUP_FLOOR:
                 m_io.pivotGoPosition(pivotPositionAlgaePickupFloor);
+                m_io.gripperAlgaeOn();
                 break;
             case ALGAE_PICKUP_L2:
                 m_io.pivotGoPosition(pivotPositionAlgaePickupL2);
+                m_io.gripperAlgaeOn();
                 break;
             case ALGAE_PICKUP_L3:
                 m_io.pivotGoPosition(pivotPositionAlgaePickupL3);
+                m_io.gripperAlgaeOn();
                 break;
 
             case ALGAE_HOME:
                 m_io.pivotGoPosition(pivotPositionAlgaeHome);
                 break;
 
-            case ALGAE_SCORE_NET:
             case ALGAE_SCORING_NET:
+                m_io.gripperReverse();
+            case ALGAE_SCORE_NET:
                 m_io.pivotGoPosition(pivotPositionNet);
                 break;
-            case ALGAE_SCORE_PROCESSOR:
             case ALGAE_SCORING_PROCESSOR:
+                m_io.gripperReverse();
+            case ALGAE_SCORE_PROCESSOR:
                 m_io.pivotGoPosition(pivotPositionProcessor);
                 break;
         }

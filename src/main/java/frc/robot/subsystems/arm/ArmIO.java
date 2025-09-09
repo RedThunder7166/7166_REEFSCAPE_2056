@@ -21,4 +21,5 @@ public interface ArmIO {
     public default void gripperCoralOn() { }
     public default void gripperAlgaeOn() { }
     public default void gripperOff() { }
+    public default void gripperReverse() { }
 }

@@ -24,7 +24,7 @@ import frc.robot.OurRobotState;
 public class ArmIOReal implements ArmIO {
     private final TalonFX m_pivotMotor = new TalonFX(pivotMotorId);
     private final TalonFX m_gripperMotor = new TalonFX(gripperMotorId);
-    private final DigitalInput m_gripperSensor = new DigitalInput(gripperSensorId);
+    // private final DigitalInput m_gripperSensor = new DigitalInput(gripperSensorId);
 
     private final StatusSignal<Angle> m_pivotMotorPositionSignal = m_pivotMotor.getPosition();
     private final StatusSignal<Current> m_pivotMotorCurrentSignal = m_pivotMotor.getSupplyCurrent();
@@ -78,17 +78,12 @@ public class ArmIOReal implements ArmIO {
 
     @Override
     public void periodic() {
-        if (OurRobotState.getIsIdle()) {
-            m_pivotMotor.setControl(m_neutralRequest);
-            m_gripperMotor.setControl(m_neutralRequest);
-        } else {
-            boolean gripperSensorTripped = !m_gripperSensor.get();
-            if (m_gripperCoralOn && gripperSensorTripped)
-                gripperOff();
+        // boolean gripperSensorTripped = !m_gripperSensor.get();
+        // if (m_gripperCoralOn && gripperSensorTripped)
+        //     gripperOff();
 
-            // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
-            OurRobotState.setIsCoralInGripper(gripperSensorTripped);
-        }
+        // // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
+        // OurRobotState.setIsCoralInGripper(gripperSensorTripped);
     }
 
     @Override
@@ -116,6 +111,11 @@ public class ArmIOReal implements ArmIO {
     @Override
     public void gripperAlgaeOn() {
         m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
+    }
+
+    @Override
+    public void gripperReverse() {
+        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
     }
 
     @Override

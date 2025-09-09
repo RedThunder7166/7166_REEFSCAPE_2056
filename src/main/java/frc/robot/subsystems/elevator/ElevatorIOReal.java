@@ -19,7 +19,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
-import frc.robot.OurRobotState;
 
 public class ElevatorIOReal implements ElevatorIO {
     private final TalonFX m_leaderMotor = new TalonFX(leaderMotorId);
@@ -85,8 +84,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void periodic() {
-        if (OurRobotState.getIsIdle())
-            m_leaderMotor.setControl(m_neutralRequest);
+        m_leaderMotor.setControl(m_neutralRequest);
     }
 
     @Override

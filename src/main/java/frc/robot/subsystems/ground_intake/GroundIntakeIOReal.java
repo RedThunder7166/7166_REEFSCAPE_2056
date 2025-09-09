@@ -70,15 +70,11 @@ public class GroundIntakeIOReal implements GroundIntakeIO {
 
     @Override
     public void periodic() {
-        if (OurRobotState.getIsIdle()) {
-            m_rollerMotor.setControl(m_neutralRequest);
-            m_actuatorMotor.setControl(m_neutralRequest);
-        } else {
-            if (OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE && OurRobotState.getIsCoralHolderFirstSensorTripped()) {
-                stopRoller();
-                retract();
-                OurRobotState.setScoreMechanismState(ScoreMechanismState.HOME);
-            }
+        if (OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE && OurRobotState.getIsCoralHolderFirstSensorTripped()) {
+            stopRoller();
+            retract();
+            // OurRobotState.setIsDeployingIntake(false);
+            OurRobotState.setScoreMechanismState(ScoreMechanismState.HOME);
         }
     }
 

@@ -18,6 +18,7 @@ public class ArmConstants {
     public static final NeutralModeValue gripperNeutralMode = NeutralModeValue.Brake;
     public static final double gripperCoralOutput = 0.1d;
     public static final double gripperAlgaeOutput = 0.1d;
+    public static final double gripperReverseOutput = -0.2d;
 
     public static final int gripperSensorId = -1;
 

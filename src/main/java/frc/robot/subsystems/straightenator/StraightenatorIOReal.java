@@ -30,8 +30,8 @@ public class StraightenatorIOReal implements StraightenatorIO {
     private final StatusSignal<AngularVelocity> m_rightMotorVelocitySignal = m_rightMotor.getVelocity();
     private final StatusSignal<Current> m_rightMotorCurrentSignal = m_rightMotor.getSupplyCurrent();
 
-    private final DigitalInput m_firstSensor = new DigitalInput(firstSensorId);
-    private final DigitalInput m_secondSensor = new DigitalInput(secondSensorId);
+    // private final DigitalInput m_firstSensor = new DigitalInput(firstSensorId);
+    // private final DigitalInput m_secondSensor = new DigitalInput(secondSensorId);
 
     private final NeutralOut m_neutralRequest = new NeutralOut();
 
@@ -60,21 +60,17 @@ public class StraightenatorIOReal implements StraightenatorIO {
 
     @Override
     public void periodic() {
-        boolean firstSensorTripped = !m_firstSensor.get();
-        boolean secondSensorTripped = !m_secondSensor.get();
+        // boolean firstSensorTripped = !m_firstSensor.get();
+        // boolean secondSensorTripped = !m_secondSensor.get();
 
-        if (OurRobotState.getIsIdle())
-            off();
-        else {
-            if (firstSensorTripped && OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE)
-                off();
+        // if (firstSensorTripped && OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE)
+        //     off();
 
-            if (secondSensorTripped)
-                off();
-        }
+        // if (secondSensorTripped)
+        //     off();
 
-        OurRobotState.setIsCoralHolderFirstSensorTripped(firstSensorTripped);
-        OurRobotState.setIsCoralHolderSecondSensorTripped(secondSensorTripped);
+        // OurRobotState.setIsCoralHolderFirstSensorTripped(firstSensorTripped);
+        // OurRobotState.setIsCoralHolderSecondSensorTripped(secondSensorTripped);
     }
 
     @Override

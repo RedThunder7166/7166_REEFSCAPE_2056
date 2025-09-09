@@ -14,6 +14,9 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -156,11 +159,11 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         m_drive.setDefaultCommand(
-                DriveCommands.joystickDrive(
-                        m_drive,
-                        () -> -Controls.controller.getLeftY(),
-                        () -> -Controls.controller.getLeftX(),
-                        () -> -Controls.controller.getRightX()));
+            DriveCommands.joystickDrive(
+                    m_drive,
+                    () -> -Controls.controller.getLeftY(),
+                    () -> -Controls.controller.getLeftX(),
+                    () -> -Controls.controller.getRightX()));
 
         /*
          * // Lock to 0° when A button is held
@@ -188,44 +191,55 @@ public class RobotContainer {
          *
          */
 
-        Controls.l1Coral.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L1)));
-        Controls.l2Coral.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L2)));
-        Controls.l3Coral.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L3)));
-        Controls.l4Coral.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L4)));
+        Controls.controller.start().onTrue(
+            Commands.runOnce(
+                () -> m_drive.setPose(
+                    new Pose2d(m_drive.getPose().getTranslation(), new Rotation2d())),
+            m_drive)
+            .ignoringDisable(true));
 
-        Controls.score.onTrue(setIdleFalse().andThen(OurRobotState.scoreCommand));
-        Controls.l2Algae.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L2)));
-        Controls.l3Algae.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L3)));
-        Controls.algaePickupFloor.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_FLOOR)));
+        Controls.l1Coral.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L1));
+        Controls.l2Coral.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L2));
+        Controls.l3Coral.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L3));
+        Controls.l4Coral.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L4));
 
-        Controls.processor.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_PROCESSOR)));
-        Controls.net.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_NET)));
+        Controls.score.onTrue(OurRobotState.scoreCommand);
+        Controls.l2Algae.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L2));
+        Controls.l3Algae.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L3));
+        Controls.algaePickupFloor.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_FLOOR));
 
-        Controls.homeButton.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.HOME)));
+        Controls.processor.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_PROCESSOR));
+        Controls.net.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_SCORE_NET));
 
-        Controls.deployIntake.onTrue(setIdleFalse().andThen(
-                OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_INTAKE)));
-        Controls.retractIntake.onTrue(setIdleFalse().andThen(
-                m_groundIntakeSubsystem.retract()));
+        Controls.home.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.HOME));
 
-        Controls.grabCoral.onTrue(setIdleFalse().andThen(grabCoral()));
+        Controls.algaeHome.onTrue(
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_HOME));
+
+        Controls.deployIntake.onTrue(
+            // OurRobotState.deployIntake());
+            OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_INTAKE));
+        Controls.retractIntake.onTrue(
+            m_groundIntakeSubsystem.retract());
+
+        Controls.grabCoral.onTrue(grabCoral());
 
         // TODO: we need this to be in a subsystem, obviously
-        // Controls.deployClimb.onTrue(setIdleFalse().andThen(
-        //         Commands.runOnce(
-        //                 () -> {
-        //                     OurRobotState.deployClimb();
-        //                 })));
+        // Controls.deployClimb.onTrue(
+        //     Commands.runOnce(
+        //             () -> {
+        //                 OurRobotState.deployClimb();
+        //             }));
     }
 
     /**
@@ -235,10 +249,6 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         return autoChooser.get();
-    }
-
-    private Command setIdleFalse() {
-        return Commands.runOnce(() -> OurRobotState.setIsIdle(false));
     }
 
     private Command grabCoral() {
