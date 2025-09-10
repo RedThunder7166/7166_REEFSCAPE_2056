@@ -17,11 +17,15 @@ import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Mode;
 import frc.robot.OurRobotState.ScoreMechanismState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -48,6 +52,10 @@ import frc.robot.subsystems.straightenator.StraightenatorIO;
 import frc.robot.subsystems.straightenator.StraightenatorSubsystem;
 import frc.robot.subsystems.straightenator.StraightenatorIOReal;
 import frc.robot.subsystems.straightenator.StraightenatorIOSim;
+
+import static edu.wpi.first.units.Units.Inches;
+
+import java.util.Optional;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -148,6 +156,7 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
+    private Distance m_manualElevatorTarget = Inches.of(3);
     /**
      * Use this method to define your button->command mappings. Buttons can be
      * created by
@@ -178,19 +187,9 @@ public class RobotContainer {
          *
          * // Switch to X pattern when X button is pressed
          * controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-         *
-         * // Reset gyro to 0° when B button is pressed
-         * controller
-         * .b()
-         * .onTrue(
-         * Commands.runOnce(
-         * () -> drive.setPose(
-         * new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-         * drive)
-         * .ignoringDisable(true));
-         *
          */
 
+        // Reset gyro to 0°
         Controls.controller.start().onTrue(
             Commands.runOnce(
                 () -> m_drive.setPose(
@@ -240,6 +239,28 @@ public class RobotContainer {
         //             () -> {
         //                 OurRobotState.deployClimb();
         //             }));
+
+        // if (Constants.currentMode == Mode.SIM) {
+            CommandXboxController secondaryController = new CommandXboxController(2);
+
+            secondaryController.a()
+                .onTrue(m_armSubsystem.m_gripperSensor.toggleCommand());
+
+            secondaryController.x()
+                .onTrue(m_straightenatorSubsystem.m_firstSensor.toggleCommand());
+            secondaryController.b()
+                .onTrue(m_straightenatorSubsystem.m_secondSensor.toggleCommand());
+
+            m_elevatorSubsystem.setManualTargetDistanceSupplier(() -> {
+                double value = secondaryController.getLeftY();
+                if (Math.abs(value) > 0.22d) {
+                    value /= 4d;
+                    m_manualElevatorTarget = m_manualElevatorTarget.plus(Inches.of(value));
+                    return Optional.of(m_manualElevatorTarget);
+                }
+                return Optional.empty();
+            });
+        // }
     }
 
     /**

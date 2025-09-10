@@ -208,6 +208,24 @@ public class OurRobotState {
 
     static { isCoralInGripperPublisher.set(isCoralInGripper); }
 
+
+    private static boolean isCoralInHolder = false;
+    private static final BooleanPublisher isCoralInHolderPublisher = robotStateTable.getBooleanTopic("IsCoralInHolder").publish();
+    public static final Trigger isCoralInBotHolder = new Trigger(OurRobotState::getIsCoralInHolder);
+
+    public static boolean getIsCoralInHolder() {
+        return isCoralInHolder;
+    }
+
+    public static void setIsCoralInHolder(boolean value) {
+        if (value != isCoralInHolder)
+            isCoralInHolderPublisher.set(value);
+        isCoralInHolder = value;
+    }
+
+    static { isCoralInHolderPublisher.set(isCoralInHolder); }
+
+
     private static boolean isClimbOut = false;
     private static final BooleanPublisher isClimbOutPublisher = robotStateTable.getBooleanTopic("IsClimbOut").publish();
     public static final Trigger isClimbOutTrigger = new Trigger(OurRobotState::getIsClimbOut);

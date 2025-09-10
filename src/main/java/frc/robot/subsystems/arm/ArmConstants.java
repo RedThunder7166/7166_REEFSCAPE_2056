@@ -23,15 +23,19 @@ public class ArmConstants {
     public static final int gripperSensorId = -1;
 
     // POSITIVE IS UP (CLOCKWISE MOTION)
-    public static final int pivotMotorId = -1;
+    public static final int pivotMotorId = 18;
     public static final InvertedValue pivotInverted = InvertedValue.Clockwise_Positive;
 
-    public static final int gripperMotorId = -1;
+    // POSITIVE IS TOWARD THE ROBOT (INTAKE)
+    public static final int gripperMotorId = 11;
     public static final InvertedValue gripperInverted = InvertedValue.CounterClockwise_Positive;
 
 
     public static double pivotAngleToMechanismPosition(Angle angle) {
         return angle.in(Degrees) / 360d;
+    }
+    public static final Angle mechanismPositionToPivotAngle(double position) {
+        return Degrees.of(position * 360d);
     }
 
     public static final double pivotPositionGrab = pivotAngleToMechanismPosition(Degrees.of(-81));

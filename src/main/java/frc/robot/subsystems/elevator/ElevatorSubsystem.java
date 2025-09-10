@@ -6,13 +6,20 @@ package frc.robot.subsystems.elevator;
 
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.OurRobotState;
+import frc.robot.util.OptionalDistanceSupplier;
 
 public class ElevatorSubsystem extends SubsystemBase {
     private final ElevatorIO m_io;
     private final ElevatorIOInputsAutoLogged m_inputs = new ElevatorIOInputsAutoLogged();
+    private OptionalDistanceSupplier m_manualTargetDistanceSupplier = null;
+
+    private boolean m_isManual = false;
 
     public ElevatorSubsystem(ElevatorIO io) {
         m_io = io;
@@ -20,18 +27,32 @@ public class ElevatorSubsystem extends SubsystemBase {
         OurRobotState.addScoreMechanismStateChangeCallback(this::scoreMechanismStateChangeCallback);
     }
 
+    public void setManualTargetDistanceSupplier(OptionalDistanceSupplier supplier) {
+        m_manualTargetDistanceSupplier = supplier;
+    }
+
     @Override
     public void periodic() {
+        if (m_isManual && m_manualTargetDistanceSupplier != null)
+            m_manualTargetDistanceSupplier.getAsOptionalDistance()
+                .ifPresent(this::goDistance);
+
         m_io.updateInputs(m_inputs);
         OurRobotState.setIsElevatorAboveArmClearance(m_io.isAtOrAbovePosition(positionArmClearance));
+
+        Logger.processInputs("ElevatorSubsystem", m_inputs);
     }
 
     public Command goPosition(double position) {
         return runOnce(() -> m_io.goPosition(position))
             .until(() -> m_io.isAtPosition(position));
     }
+    public Command goDistance(Distance distance) {
+        return goPosition(distanceToMechanismPosition(distance));
+    }
 
     private void scoreMechanismStateChangeCallback() {
+        m_isManual = false;
         switch (OurRobotState.getScoreMechanismState()) {
             case HOME:
                 m_io.goPosition(positionHome);

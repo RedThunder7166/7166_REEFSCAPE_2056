@@ -2,13 +2,20 @@ package frc.robot.subsystems.arm;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import frc.robot.util.BeamBreakSensor;
+
 public interface ArmIO {
     @AutoLog
     public static class ArmIOInputs {
         double pivotMotorPositionRotations;
+        double pivotMotorPositionDegrees;
         double pivotTargetMotorPositionRotations;
         double pivotMotorCurrentAmps;
+
+        boolean gripperSensorTripped;
     }
+
+    public default ArmIO withGripperSensor(BeamBreakSensor sensor) { return this; }
 
     public default void periodic() { }
     public default void updateInputs(ArmIOInputs inputs) { }

@@ -16,15 +16,20 @@ public class ElevatorConstants {
     // FIXME: elevator is at position threshold
     public static final double isAtPositionThreshold = 0.001d;
 
-    public static final int leaderMotorId = -1; // right
+    public static final int leaderMotorId = 13; // left (by the CANivore)
     public static final InvertedValue leaderInverted = InvertedValue.Clockwise_Positive;
 
-    public static final int followerMotorId = -1; // left (by the CANivore)
+    public static final int followerMotorId = 6; // right
     public static final InvertedValue followerInverted = InvertedValue.CounterClockwise_Positive;
 
     public static double distanceToMechanismPosition(Distance distance) {
         return distance.in(Millimeters) / pitchCircumferenceMM;
     }
+    public static Distance mechanismPositionToDistance(double position) {
+        return Millimeters.of(position * pitchCircumferenceMM);
+    }
+
+    public static final double positionMAX = 8.5;
 
     public static final double positionHome = distanceToMechanismPosition(Inches.of(0));
     public static final double positionGrab = distanceToMechanismPosition(Inches.of(0));
@@ -51,7 +56,7 @@ public class ElevatorConstants {
     // arm degree > 90
     public static final double positionArmFarNetClearance = distanceToMechanismPosition(Inches.of(30));
 
-    public static final double pidP = 1;
-    public static final double cruiseVelocity = 1;
-    public static final double acceleration = 1;
+    public static final double pidP = 16;
+    public static final double cruiseVelocity = 14;
+    public static final double acceleration = 30;
 }

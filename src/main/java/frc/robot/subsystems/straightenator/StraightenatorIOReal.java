@@ -16,13 +16,14 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.wpilibj.DigitalInput;
+import frc.robot.Constants;
 import frc.robot.OurRobotState;
 import frc.robot.OurRobotState.ScoreMechanismState;
+import frc.robot.util.BeamBreakSensor;
 
 public class StraightenatorIOReal implements StraightenatorIO {
-    private final TalonFX m_leftMotor = new TalonFX(leftMotorId);
-    private final TalonFX m_rightMotor = new TalonFX(rightMotorId);
+    private final TalonFX m_leftMotor = new TalonFX(leftMotorId, Constants.CANBUS);
+    private final TalonFX m_rightMotor = new TalonFX(rightMotorId, Constants.CANBUS);
 
     private final StatusSignal<AngularVelocity> m_leftMotorVelocitySignal = m_leftMotor.getVelocity();
     private final StatusSignal<Current> m_leftMotorCurrentSignal = m_leftMotor.getSupplyCurrent();
@@ -30,8 +31,10 @@ public class StraightenatorIOReal implements StraightenatorIO {
     private final StatusSignal<AngularVelocity> m_rightMotorVelocitySignal = m_rightMotor.getVelocity();
     private final StatusSignal<Current> m_rightMotorCurrentSignal = m_rightMotor.getSupplyCurrent();
 
-    // private final DigitalInput m_firstSensor = new DigitalInput(firstSensorId);
-    // private final DigitalInput m_secondSensor = new DigitalInput(secondSensorId);
+    private BeamBreakSensor m_firstSensor;
+    private BeamBreakSensor m_secondSensor;
+    private boolean m_firstSensorTripped;
+    private boolean m_secondSensorTripped;
 
     private final NeutralOut m_neutralRequest = new NeutralOut();
 
@@ -59,22 +62,21 @@ public class StraightenatorIOReal implements StraightenatorIO {
     }
 
     @Override
-    public void periodic() {
-        // boolean firstSensorTripped = !m_firstSensor.get();
-        // boolean secondSensorTripped = !m_secondSensor.get();
-
-        // if (firstSensorTripped && OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE)
-        //     off();
-
-        // if (secondSensorTripped)
-        //     off();
-
-        // OurRobotState.setIsCoralHolderFirstSensorTripped(firstSensorTripped);
-        // OurRobotState.setIsCoralHolderSecondSensorTripped(secondSensorTripped);
+    public StraightenatorIOReal withFirstSensor(BeamBreakSensor sensor) {
+        m_firstSensor = sensor;
+        return this;
+    }
+    @Override
+    public StraightenatorIOReal withSecondSensor(BeamBreakSensor sensor) {
+        m_secondSensor = sensor;
+        return this;
     }
 
     @Override
     public void updateInputs(StraightenatorIOInputs inputs) {
+        m_firstSensorTripped = !m_firstSensor.get();
+        m_secondSensorTripped = !m_secondSensor.get();
+
         BaseStatusSignal.refreshAll(m_leftMotorVelocitySignal, m_leftMotorCurrentSignal, m_rightMotorVelocitySignal, m_rightMotorCurrentSignal);
 
         inputs.leftMotorVelocityRPS = m_leftMotorVelocitySignal.getValueAsDouble();
@@ -85,13 +87,21 @@ public class StraightenatorIOReal implements StraightenatorIO {
     }
 
     @Override
+    public void periodic() {
+    }
+
+    @Override
     public void on() {
-        m_leftMotor.setControl(m_dutyCycleRequest.withOutput(intakeOutput));
-        m_rightMotor.setControl(m_dutyCycleRequest.withOutput(intakeOutput));
+        if (ENABLE) {
+            m_leftMotor.setControl(m_dutyCycleRequest.withOutput(intakeOutput));
+            m_rightMotor.setControl(m_dutyCycleRequest.withOutput(intakeOutput));
+        }
     }
     @Override
     public void off() {
-        m_leftMotor.setControl(m_neutralRequest);
-        m_rightMotor.setControl(m_neutralRequest);
+        if (ENABLE) {
+            m_leftMotor.setControl(m_neutralRequest);
+            m_rightMotor.setControl(m_neutralRequest);
+        }
     }
 }

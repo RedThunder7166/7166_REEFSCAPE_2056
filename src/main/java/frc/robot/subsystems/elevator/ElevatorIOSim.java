@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Inches;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim implements ElevatorIO {
@@ -13,8 +14,11 @@ public class ElevatorIOSim implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         // :(
         inputs.targetMotorPositionRotations = m_targetPosition;
+
         inputs.leadMotorPositionRotations = m_targetPosition;
+        inputs.leadMotorPositionInches = mechanismPositionToDistance(m_targetPosition).in(Inches);
         inputs.followerMotorPositionRotations = m_targetPosition;
+        inputs.followerMotorPositionInches = mechanismPositionToDistance(m_targetPosition).in(Inches);
     }
 
     @Override

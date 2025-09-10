@@ -6,16 +6,20 @@ package frc.robot.subsystems.arm;
 
 import static frc.robot.subsystems.arm.ArmConstants.*;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.OurRobotState;
+import frc.robot.util.BeamBreakSensor;
 
 public class ArmSubsystem extends SubsystemBase {
     private final ArmIO m_io;
     private final ArmIOInputsAutoLogged m_inputs = new ArmIOInputsAutoLogged();
+    public final BeamBreakSensor m_gripperSensor = new BeamBreakSensor(gripperSensorId, null);
 
     public ArmSubsystem(ArmIO io) {
-        m_io = io;
+        m_io = io.withGripperSensor(m_gripperSensor);
 
         OurRobotState.addScoreMechanismStateChangeCallback(this::scoreMechanismStateChangeCallback);
     }
@@ -24,7 +28,12 @@ public class ArmSubsystem extends SubsystemBase {
     public void periodic() {
         m_io.periodic();
         m_io.updateInputs(m_inputs);
+
         OurRobotState.setIsArmPastFarNetClearance(m_io.pivotIsAtOrPastPosition(pivotPositionFarNetClearance));
+        // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
+        OurRobotState.setIsCoralInGripper(m_inputs.gripperSensorTripped);
+
+        Logger.processInputs("ArmSubsystem", m_inputs);
     }
 
     private void scoreMechanismStateChangeCallback() {

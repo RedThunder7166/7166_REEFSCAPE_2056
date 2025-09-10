@@ -4,9 +4,19 @@
 
 package frc.robot.subsystems.ground_intake;
 
+import frc.robot.util.BeamBreakSensor;
+
 public class GroundIntakeIOSim implements GroundIntakeIO {
+    private BeamBreakSensor m_beamBreak;
+
+    @Override
+    public GroundIntakeIOSim withBeamBreak(BeamBreakSensor sensor) {
+        m_beamBreak = sensor;
+        return this;
+    }
+
     @Override
     public void updateInputs(GroundIntakeIOInputs inputs) {
-
+        inputs.beamBreakTripped = !m_beamBreak.get();
     }
 }

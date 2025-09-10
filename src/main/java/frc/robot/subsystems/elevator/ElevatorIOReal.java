@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Inches;
 import static frc.robot.subsystems.arm.ArmConstants.pivotIsAtPositionThreshold;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
@@ -11,18 +12,20 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
+import frc.robot.Constants;
 
 public class ElevatorIOReal implements ElevatorIO {
-    private final TalonFX m_leaderMotor = new TalonFX(leaderMotorId);
-    private final TalonFX m_followerMotor = new TalonFX(followerMotorId);
+    private final TalonFX m_leaderMotor = new TalonFX(leaderMotorId, Constants.CANBUS);
+    private final TalonFX m_followerMotor = new TalonFX(followerMotorId, Constants.CANBUS);
 
     private final StatusSignal<Angle> m_leaderMotorPositionSignal = m_leaderMotor.getPosition();
     private final StatusSignal<Current> m_leaderMotorCurrentSignal = m_leaderMotor.getSupplyCurrent();
@@ -47,6 +50,8 @@ public class ElevatorIOReal implements ElevatorIO {
         leaderConfig.Slot0.kP = pidP;
         leaderConfig.MotionMagic.MotionMagicAcceleration = acceleration;
         leaderConfig.MotionMagic.MotionMagicCruiseVelocity = cruiseVelocity;
+        leaderConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        leaderConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = positionMAX;
 
         var followerConfig = new TalonFXConfiguration();
         followerConfig.MotorOutput.NeutralMode = neutralMode;
@@ -65,8 +70,7 @@ public class ElevatorIOReal implements ElevatorIO {
         m_leaderMotor.setPosition(m_motorTargetPosition);
         m_followerMotor.setPosition(m_motorTargetPosition);
 
-        // FIXME: how does MotorOutput.Inverted affect opposes (or likely the other way around)?
-        m_followerMotor.setControl(new Follower(m_leaderMotor.getDeviceID(), followerInverted != leaderInverted));
+        m_followerMotor.setControl(new StrictFollower(m_leaderMotor.getDeviceID()));
     }
 
     @Override
@@ -75,26 +79,35 @@ public class ElevatorIOReal implements ElevatorIO {
 
         inputs.targetMotorPositionRotations = m_motorTargetPosition;
 
-        inputs.leadMotorPositionRotations = m_leaderMotorPositionSignal.getValueAsDouble();
+        final double leadMotorPositionRotations = m_leaderMotorPositionSignal.getValueAsDouble();
+        inputs.leadMotorPositionRotations = leadMotorPositionRotations;
+        inputs.leadMotorPositionInches = mechanismPositionToDistance(leadMotorPositionRotations).in(Inches);
         inputs.leadMotorCurrentAmps = m_leaderMotorCurrentSignal.getValueAsDouble();
 
-        inputs.followerMotorPositionRotations = m_followerMotorPositionSignal.getValueAsDouble();
+        final double followerMotorPositionRotations = m_followerMotorPositionSignal.getValueAsDouble();
+        inputs.followerMotorPositionRotations = followerMotorPositionRotations;
+        inputs.followerMotorPositionInches = mechanismPositionToDistance(followerMotorPositionRotations).in(Inches);
         inputs.followerMotorCurrentAmps = m_followerMotorCurrentSignal.getValueAsDouble();
+    }
+
+    private void setControl(ControlRequest request) {
+        // FIXME: TEMPORARY
+        // m_leaderMotor.setControl(request);
     }
 
     @Override
     public void periodic() {
-        m_leaderMotor.setControl(m_neutralRequest);
+        setControl(m_neutralRequest);
     }
 
     @Override
     public void neutral() {
-        m_leaderMotor.setControl(m_neutralRequest);
+        setControl(m_neutralRequest);
     }
 
     @Override
     public void goPosition(double position) {
-        m_leaderMotor.setControl(m_positionRequest.withPosition(position));
+        setControl(m_positionRequest.withPosition(position));
     }
 
     @Override

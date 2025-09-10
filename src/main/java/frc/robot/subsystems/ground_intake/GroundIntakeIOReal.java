@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.ground_intake;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.subsystems.ground_intake.GroundIntakeConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -19,14 +20,17 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import frc.robot.Constants;
 import frc.robot.OurRobotState;
 import frc.robot.OurRobotState.ScoreMechanismState;
+import frc.robot.util.BeamBreakSensor;
 
 public class GroundIntakeIOReal implements GroundIntakeIO {
-    private final TalonFX m_rollerMotor = new TalonFX(rollerMotorId);
-    private final TalonFX m_actuatorMotor = new TalonFX(actuatorMotorId);
+    private final TalonFX m_rollerMotor = new TalonFX(rollerMotorId, Constants.CANBUS);
+    private final TalonFX m_actuatorMotor = new TalonFX(actuatorMotorId, Constants.CANBUS);
 
-    // private final DigitalInput m_beamBreakSensor = new DigitalInput(beamBreakId);
+    private BeamBreakSensor m_beamBreak;
+    private boolean m_beamBreakTripped = false;
 
     private final StatusSignal<AngularVelocity> m_rollerMotorVelocitySignal = m_rollerMotor.getVelocity();
     private final StatusSignal<Current> m_rollerMotorCurrentSignal = m_rollerMotor.getSupplyCurrent();
@@ -53,7 +57,7 @@ public class GroundIntakeIOReal implements GroundIntakeIO {
         var actuatorConfig = new TalonFXConfiguration();
         actuatorConfig.MotorOutput.NeutralMode = actuatorNeutralMode;
         actuatorConfig.MotorOutput.Inverted = actuatorInverted;
-        // FIXME: "must be configured so that the sensor reports a position of 0 when the mechanism is horizontal"
+        actuatorConfig.Feedback.SensorToMechanismRatio = actuatorMotorReduction;
         actuatorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
         actuatorConfig.Slot0.kP = actuatorPidP;
         actuatorConfig.MotionMagic.MotionMagicAcceleration = actuatorAcceleration;
@@ -69,17 +73,16 @@ public class GroundIntakeIOReal implements GroundIntakeIO {
     }
 
     @Override
-    public void periodic() {
-        if (OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE && OurRobotState.getIsCoralHolderFirstSensorTripped()) {
-            stopRoller();
-            retract();
-            // OurRobotState.setIsDeployingIntake(false);
-            OurRobotState.setScoreMechanismState(ScoreMechanismState.HOME);
-        }
+    public GroundIntakeIOReal withBeamBreak(BeamBreakSensor sensor) {
+        m_beamBreak = sensor;
+        return this;
     }
 
     @Override
     public void updateInputs(GroundIntakeIOInputs inputs) {
+        m_beamBreakTripped = !m_beamBreak.get();
+        inputs.beamBreakTripped = m_beamBreakTripped;
+
         BaseStatusSignal.refreshAll(m_rollerMotorVelocitySignal, m_rollerMotorCurrentSignal, m_actuatorMotorPositionSignal, m_actuatorMotorCurrentSignal);
 
         inputs.targetActuatorMotorPositionRotations = m_actuatorMotorTargetPosition;
@@ -87,8 +90,14 @@ public class GroundIntakeIOReal implements GroundIntakeIO {
         inputs.rollerMotorVelocityRPS = m_rollerMotorVelocitySignal.getValueAsDouble();
         inputs.rollerMotorCurrentAmps = m_rollerMotorCurrentSignal.getValueAsDouble();
 
-        inputs.actuatorMotorPositionRotations = m_actuatorMotorPositionSignal.getValueAsDouble();
+        final double actuatorMotorPositionRotations = m_actuatorMotorPositionSignal.getValueAsDouble();
+        inputs.actuatorMotorPositionRotations = actuatorMotorPositionRotations;
+        inputs.actuatorMotorPositionDegrees = mechanismPositionToActuatorAngle(actuatorMotorPositionRotations).in(Degrees);
         inputs.actuatorMotorCurrentAmps = m_actuatorMotorCurrentSignal.getValueAsDouble();
+    }
+
+    @Override
+    public void periodic() {
     }
 
     @Override

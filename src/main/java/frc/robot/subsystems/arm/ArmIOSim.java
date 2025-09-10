@@ -4,15 +4,28 @@
 
 package frc.robot.subsystems.arm;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.subsystems.arm.ArmConstants.*;
+
+import frc.robot.util.BeamBreakSensor;
 
 public class ArmIOSim implements ArmIO {
     private double m_pivotTargetPosition = pivotPositionInitial;
+    private BeamBreakSensor m_gripperSensor;
+
+    @Override
+    public ArmIOSim withGripperSensor(BeamBreakSensor sensor) {
+        m_gripperSensor = sensor;
+        return this;
+    }
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
+        inputs.gripperSensorTripped = !m_gripperSensor.get();
+
         // :(
         inputs.pivotMotorPositionRotations = m_pivotTargetPosition;
+        inputs.pivotMotorPositionDegrees = mechanismPositionToPivotAngle(m_pivotTargetPosition).in(Degrees);
         inputs.pivotTargetMotorPositionRotations = m_pivotTargetPosition;
     }
 

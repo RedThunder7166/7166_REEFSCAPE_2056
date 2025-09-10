@@ -2,6 +2,8 @@ package frc.robot.subsystems.ground_intake;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import frc.robot.util.BeamBreakSensor;
+
 public interface GroundIntakeIO {
     @AutoLog
     public static class GroundIntakeIOInputs {
@@ -11,8 +13,13 @@ public interface GroundIntakeIO {
         double rollerMotorCurrentAmps;
 
         double actuatorMotorPositionRotations;
+        double actuatorMotorPositionDegrees;
         double actuatorMotorCurrentAmps;
+
+        boolean beamBreakTripped;
     }
+
+    public default GroundIntakeIO withBeamBreak(BeamBreakSensor sensor) { return this; }
 
     public default void periodic() {}
     public default void updateInputs(GroundIntakeIOInputs inputs) { }

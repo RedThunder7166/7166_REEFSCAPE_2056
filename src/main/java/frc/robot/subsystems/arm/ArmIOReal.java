@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.arm;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.subsystems.arm.ArmConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -18,13 +19,15 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.wpilibj.DigitalInput;
+import frc.robot.Constants;
 import frc.robot.OurRobotState;
+import frc.robot.util.BeamBreakSensor;
 
 public class ArmIOReal implements ArmIO {
-    private final TalonFX m_pivotMotor = new TalonFX(pivotMotorId);
-    private final TalonFX m_gripperMotor = new TalonFX(gripperMotorId);
-    // private final DigitalInput m_gripperSensor = new DigitalInput(gripperSensorId);
+    private final TalonFX m_pivotMotor = new TalonFX(pivotMotorId, Constants.CANBUS);
+    private final TalonFX m_gripperMotor = new TalonFX(gripperMotorId, Constants.CANBUS);
+    private BeamBreakSensor m_gripperSensor;
+    private boolean m_gripperSensorTripped = false;
 
     private final StatusSignal<Angle> m_pivotMotorPositionSignal = m_pivotMotor.getPosition();
     private final StatusSignal<Current> m_pivotMotorCurrentSignal = m_pivotMotor.getSupplyCurrent();
@@ -68,29 +71,37 @@ public class ArmIOReal implements ArmIO {
     }
 
     @Override
+    public ArmIOReal withGripperSensor(BeamBreakSensor sensor) {
+        m_gripperSensor = sensor;
+        return this;
+    }
+
+    @Override
     public void updateInputs(ArmIOInputs inputs) {
+        m_gripperSensorTripped = !m_gripperSensor.get();
+        inputs.gripperSensorTripped = m_gripperSensorTripped;
+
         BaseStatusSignal.refreshAll(m_pivotMotorPositionSignal, m_pivotMotorCurrentSignal);
 
-        inputs.pivotMotorPositionRotations = m_pivotMotorPositionSignal.getValueAsDouble();
+        final double pivotMotorPositionRotations = m_pivotMotorPositionSignal.getValueAsDouble();
+        inputs.pivotMotorPositionRotations = pivotMotorPositionRotations;
+        inputs.pivotMotorPositionDegrees = mechanismPositionToPivotAngle(pivotMotorPositionRotations).in(Degrees);
         inputs.pivotTargetMotorPositionRotations = m_pivotMotorTargetPosition;
         inputs.pivotMotorCurrentAmps = m_pivotMotorCurrentSignal.getValueAsDouble();
     }
 
     @Override
     public void periodic() {
-        // boolean gripperSensorTripped = !m_gripperSensor.get();
-        // if (m_gripperCoralOn && gripperSensorTripped)
-        //     gripperOff();
-
-        // // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
-        // OurRobotState.setIsCoralInGripper(gripperSensorTripped);
+        if (m_gripperCoralOn && m_gripperSensorTripped)
+            gripperOff();
     }
 
     @Override
     public void pivotGoPosition(double position) {
         // FIXME: ELEVATOR CLEARANCE
         m_pivotMotorTargetPosition = position;
-        m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(m_pivotMotorTargetPosition));
+        // FIXME: TEMPORARY
+        // m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(m_pivotMotorTargetPosition));
     }
 
     @Override
@@ -106,21 +117,26 @@ public class ArmIOReal implements ArmIO {
     @Override
     public void gripperCoralOn() {
         m_gripperCoralOn = true;
-        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperCoralOutput));
+        // FIXME: TEMPORARY
+        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperCoralOutput));
     }
     @Override
     public void gripperAlgaeOn() {
-        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
+        // FIXME: TEMPORARY
+        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
     }
 
     @Override
     public void gripperReverse() {
-        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
+        m_gripperCoralOn = false;
+        // FIXME: TEMPORARY
+        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
     }
 
     @Override
     public void gripperOff() {
         m_gripperCoralOn = false;
-        m_gripperMotor.setControl(m_neutralRequest);
+        // FIXME: TEMPORARY
+        // m_gripperMotor.setControl(m_neutralRequest);
     }
 }

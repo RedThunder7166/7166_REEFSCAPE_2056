@@ -8,9 +8,11 @@ public interface ElevatorIO {
         double targetMotorPositionRotations;
 
         double leadMotorPositionRotations;
+        double leadMotorPositionInches;
         double leadMotorCurrentAmps;
 
         double followerMotorPositionRotations;
+        double followerMotorPositionInches;
         double followerMotorCurrentAmps;
     }
 
