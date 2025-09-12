@@ -17,18 +17,18 @@ import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.Mode;
 import frc.robot.OurRobotState.ScoreMechanismState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.arm.ArmIO;
 import frc.robot.subsystems.arm.ArmIOReal;
 import frc.robot.subsystems.arm.ArmIOSim;
@@ -53,6 +53,7 @@ import frc.robot.subsystems.straightenator.StraightenatorSubsystem;
 import frc.robot.subsystems.straightenator.StraightenatorIOReal;
 import frc.robot.subsystems.straightenator.StraightenatorIOSim;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 
 import java.util.Optional;
@@ -156,7 +157,9 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
-    private Distance m_manualElevatorTarget = Inches.of(3);
+    private Distance m_manualElevatorTarget = ElevatorConstants.mechanismPositionToDistance(ElevatorConstants.positionInitial);
+    private Angle m_manualArmPivotTarget = ArmConstants.mechanismPositionToPivotAngle(ArmConstants.pivotPositionInitial);
+
     /**
      * Use this method to define your button->command mappings. Buttons can be
      * created by
@@ -166,13 +169,18 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
-        // Default command, normal field-relative drive
         m_drive.setDefaultCommand(
             DriveCommands.joystickDrive(
-                    m_drive,
-                    () -> -Controls.controller.getLeftY(),
-                    () -> -Controls.controller.getLeftX(),
-                    () -> -Controls.controller.getRightX()));
+                m_drive,
+                () -> -Controls.controller.getLeftY(),
+                () -> {
+                    if (Controls.score.getAsBoolean()) {
+                        // TODO: return auto align stuff
+                        return 0;
+                    }
+                    return -Controls.controller.getLeftX();
+                },
+                () -> -Controls.controller.getRightX()));
 
         /*
          * // Lock to 0° when A button is held
@@ -207,6 +215,8 @@ public class RobotContainer {
             OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.CORAL_SCORE_L4));
 
         Controls.score.onTrue(OurRobotState.scoreCommand);
+        // Controls.switchTargetPole.onTrue();
+
         Controls.l2Algae.onTrue(
             OurRobotState.setScoreMechanismStateCommand(ScoreMechanismState.ALGAE_PICKUP_L2));
         Controls.l3Algae.onTrue(
@@ -246,17 +256,39 @@ public class RobotContainer {
             secondaryController.a()
                 .onTrue(m_armSubsystem.m_gripperSensor.toggleCommand());
 
-            secondaryController.x()
-                .onTrue(m_straightenatorSubsystem.m_firstSensor.toggleCommand());
-            secondaryController.b()
-                .onTrue(m_straightenatorSubsystem.m_secondSensor.toggleCommand());
+            // secondaryController.x()
+            //     .onTrue(m_straightenatorSubsystem.m_firstSensor.toggleCommand());
+            // secondaryController.b()
+            //     .onTrue(m_straightenatorSubsystem.m_secondSensor.toggleCommand());
 
             m_elevatorSubsystem.setManualTargetDistanceSupplier(() -> {
                 double value = secondaryController.getLeftY();
-                if (Math.abs(value) > 0.22d) {
-                    value /= 4d;
+                value = -value;
+                if (Math.abs(value) > 0.15d) {
+                    value *= 1.3d;
                     m_manualElevatorTarget = m_manualElevatorTarget.plus(Inches.of(value));
+
+                    double position = ElevatorConstants.distanceToMechanismPosition(m_manualElevatorTarget);
+                    position = Math.max(Math.min(position, ElevatorConstants.positionMAX), ElevatorConstants.positionMIN);
+
+                    m_manualElevatorTarget = ElevatorConstants.mechanismPositionToDistance(position);
                     return Optional.of(m_manualElevatorTarget);
+                }
+                return Optional.empty();
+            });
+
+            m_armSubsystem.setManualPivotAngleSupplier(() -> {
+                double value = secondaryController.getRightY();
+                value = -value;
+                if (Math.abs(value) > 0.15d) {
+                    value *= 4d;
+                    m_manualArmPivotTarget = m_manualArmPivotTarget.plus(Degrees.of(value));
+
+                    double position = ArmConstants.pivotAngleToMechanismPosition(m_manualArmPivotTarget);
+                    position = Math.max(Math.min(position, ArmConstants.positionMAX), ArmConstants.positionMIN);
+
+                    m_manualArmPivotTarget = ArmConstants.mechanismPositionToPivotAngle(position);
+                    return Optional.of(m_manualArmPivotTarget);
                 }
                 return Optional.empty();
             });
@@ -274,11 +306,11 @@ public class RobotContainer {
 
     private Command grabCoral() {
         return m_straightenatorSubsystem.on()
-            .until(OurRobotState::getIsCoralHolderSecondSensorTripped)
+            .andThen(Commands.waitUntil(OurRobotState::getIsCoralHolderSecondSensorTripped))
             // straightenator stopped due to sensor automatically
             .andThen(m_armSubsystem.gripperCoralOn())
             .andThen(m_elevatorSubsystem.goPosition(ElevatorConstants.positionGrab))
-            .until(OurRobotState::getIsCoralInGripper)
+            .andThen(Commands.waitUntil(OurRobotState::getIsCoralInGripper))
             .andThen(m_elevatorSubsystem.goPosition(ElevatorConstants.positionHome));
             // gripper stopped due to sensor automatically
     }

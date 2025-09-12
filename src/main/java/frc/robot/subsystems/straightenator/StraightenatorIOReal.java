@@ -77,6 +77,9 @@ public class StraightenatorIOReal implements StraightenatorIO {
         m_firstSensorTripped = !m_firstSensor.get();
         m_secondSensorTripped = !m_secondSensor.get();
 
+        inputs.firstSensorTripped = m_firstSensorTripped;
+        inputs.secondSensorTripped = m_secondSensorTripped;
+
         BaseStatusSignal.refreshAll(m_leftMotorVelocitySignal, m_leftMotorCurrentSignal, m_rightMotorVelocitySignal, m_rightMotorCurrentSignal);
 
         inputs.leftMotorVelocityRPS = m_leftMotorVelocitySignal.getValueAsDouble();

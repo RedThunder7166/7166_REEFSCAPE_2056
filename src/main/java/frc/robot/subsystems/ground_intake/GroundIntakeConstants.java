@@ -18,12 +18,13 @@ public class GroundIntakeConstants {
     // FIXME: arm pivot is at position threshold
     public static final double actuatorIsAtPositionThreshold = 0.001d;
 
-    public static final int beamBreakChannel = -1;
+    public static final int beamBreakChannel = 1;
 
     // POSITIVE INTAKES IN
     public static final int rollerMotorId = 12;
     public static final InvertedValue rollerInverted = InvertedValue.Clockwise_Positive;
-    public static final double rollerOutput = 1d;
+    // public static final double rollerOutput = 1d;
+    public static final double rollerOutput = 0.7d;
 
     // POSITIVE IS OUT (LIKE WHEN DEPLOYING)
     public static final int actuatorMotorId = 3;
@@ -37,7 +38,7 @@ public class GroundIntakeConstants {
     }
 
     public static final double actuatorPositionHome = actuatorAngleToMechanismPosition(Degrees.of(112d));
-    public static final double actuatorPositionDeployed = actuatorAngleToMechanismPosition(Degrees.of(-5d)); // -35
+    public static final double actuatorPositionDeployed = actuatorAngleToMechanismPosition(Degrees.of(-10d)); // -35
 
     public static final double actuatorPidP = 24;
     public static final double actuatorCruiseVelocity = 1;

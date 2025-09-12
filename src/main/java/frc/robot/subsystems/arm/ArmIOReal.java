@@ -54,6 +54,10 @@ public class ArmIOReal implements ArmIO {
         pivotConfig.Slot0.kP = pidP;
         pivotConfig.MotionMagic.MotionMagicAcceleration = acceleration;
         pivotConfig.MotionMagic.MotionMagicCruiseVelocity = cruiseVelocity;
+        pivotConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        pivotConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = positionMAX;
+        pivotConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        pivotConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = positionMIN;
 
         var gripperConfig = new TalonFXConfiguration();
         gripperConfig.MotorOutput.NeutralMode = gripperNeutralMode;
@@ -100,8 +104,7 @@ public class ArmIOReal implements ArmIO {
     public void pivotGoPosition(double position) {
         // FIXME: ELEVATOR CLEARANCE
         m_pivotMotorTargetPosition = position;
-        // FIXME: TEMPORARY
-        // m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(m_pivotMotorTargetPosition));
+        m_pivotMotor.setControl(m_pivotPositionRequest.withPosition(m_pivotMotorTargetPosition));
     }
 
     @Override
@@ -117,26 +120,22 @@ public class ArmIOReal implements ArmIO {
     @Override
     public void gripperCoralOn() {
         m_gripperCoralOn = true;
-        // FIXME: TEMPORARY
-        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperCoralOutput));
+        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperCoralOutput));
     }
     @Override
     public void gripperAlgaeOn() {
-        // FIXME: TEMPORARY
-        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
+        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
     }
 
     @Override
     public void gripperReverse() {
         m_gripperCoralOn = false;
-        // FIXME: TEMPORARY
-        // m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
+        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
     }
 
     @Override
     public void gripperOff() {
         m_gripperCoralOn = false;
-        // FIXME: TEMPORARY
-        // m_gripperMotor.setControl(m_neutralRequest);
+        m_gripperMotor.setControl(m_neutralRequest);
     }
 }

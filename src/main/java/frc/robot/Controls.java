@@ -29,6 +29,8 @@ public class Controls {
     public static final Trigger score = controller.rightTrigger();
     public static final Trigger algaePickupFloor = controller.leftTrigger();
 
+    public static final Trigger switchTargetPole = score.and(() -> Math.abs(controller.getLeftX()) > 0.5d).debounce(0.5);
+
     public static final Trigger processor = l1Button.and(OurRobotState.isCoralInGripperTrigger.negate());
     public static final Trigger l2Algae = l2Button.and(OurRobotState.isCoralInGripperTrigger.negate());
     public static final Trigger l3Algae = l3Button.and(OurRobotState.isCoralInGripperTrigger.negate());

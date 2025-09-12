@@ -7,6 +7,11 @@ import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.arm.ArmConstants;
+import frc.robot.subsystems.arm.ArmSubsystem;
+import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.elevator.ElevatorSubsystem;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -39,8 +44,14 @@ public class OurRobotState {
         private Set<ScoreMechanismState> allowedNext;
 
         static {
-            ScoreMechanismState.HOME.allowedNext = Set.of(HOME, CORAL_INTAKE, ALGAE_PICKUP_FLOOR, ALGAE_PICKUP_L2,
-                    ALGAE_PICKUP_L3);
+            ScoreMechanismState.HOME.allowedNext = Set.of(
+                HOME,
+                CORAL_SCORE_L1, CORAL_SCORE_L2,
+                CORAL_SCORE_L3, CORAL_SCORE_L4,
+                CORAL_INTAKE,
+                ALGAE_PICKUP_FLOOR, ALGAE_PICKUP_L2,
+                ALGAE_PICKUP_L3
+            );
 
             ScoreMechanismState.CORAL_INTAKE.allowedNext = Set.of(CORAL_INTAKE, HOME);
             // ScoreMechanismState.CORAL_LOADED.allowedNext = Set.of(CORAL_LOADED, CORAL_SCORE_L1, CORAL_SCORE_L2,
@@ -157,6 +168,90 @@ public class OurRobotState {
 
             setScoreMechanismState(targetState);
         });
+
+    public static void setupSubsystems(ElevatorSubsystem elevatorSubsystem, ArmSubsystem armSubsystem) {
+        scoreMechanismStateChangeCallbackList.add(() -> {
+            Command elevatorCommand = null;
+            Command armCommand = null;
+            switch (OurRobotState.getScoreMechanismState()) {
+                case HOME:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionHome);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionGrab)
+                        .alongWith(armSubsystem.gripperOff());
+                    break;
+                case CORAL_INTAKE:
+                // case CORAL_LOADED:
+                    armCommand = armSubsystem.gripperOff();
+                    break;
+
+                case CORAL_SCORE_L1:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL1Coral);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL1Coral);
+                    break;
+                case CORAL_SCORING_L1:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL1CoralScore);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL1CoralScore)
+                        .alongWith(armSubsystem.gripperReverse());
+                    break;
+                case CORAL_SCORE_L2:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2Coral);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL2Coral);
+                    break;
+                case CORAL_SCORING_L2:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2CoralScore);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL2CoralScore)
+                        .alongWith(armSubsystem.gripperReverse());
+                    break;
+                case CORAL_SCORE_L3:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3Coral);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL3Coral);
+                    break;
+                case CORAL_SCORING_L3:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3CoralScore);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL3CoralScore)
+                        .alongWith(armSubsystem.gripperReverse());
+                    break;
+                case CORAL_SCORE_L4:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL4Coral);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL4Coral);
+                    break;
+                case CORAL_SCORING_L4:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL4CoralScore);
+                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL4CoralScore)
+                        .alongWith(armSubsystem.gripperReverse());
+                    break;
+
+                case ALGAE_PICKUP_FLOOR:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionFloorAlgae);
+                    break;
+                case ALGAE_PICKUP_L2:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2Algae);
+                    break;
+                case ALGAE_PICKUP_L3:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3Algae);
+                    break;
+                case ALGAE_HOME:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionAlgaeHome);
+                    break;
+                case ALGAE_SCORE_NET:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionNet);
+                    break;
+                case ALGAE_SCORE_PROCESSOR:
+                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionProcessor);
+                    break;
+    
+                case ALGAE_SCORING_NET:
+                case ALGAE_SCORING_PROCESSOR:
+                    break;
+            }
+
+            if (elevatorCommand != null)
+                elevatorCommand.schedule();
+            else if (armCommand != null)
+                armCommand.schedule();
+        });
+    }
+
 
     public static boolean isTargetingAlgae = false;
     private static final BooleanPublisher isTargetingAlgaePublisher = robotStateTable.getBooleanTopic("IsTargetingAlgae").publish();
@@ -288,20 +383,36 @@ public class OurRobotState {
     // static { isDeployingIntakePublisher.set(isDeployingIntake); }
 
 
-    private static boolean isElevatorAboveArmClearance = false;
-    private static final BooleanPublisher isElevatorAboveArmClearancePublisher = robotStateTable.getBooleanTopic("IsElevatorAboveArmClearance").publish();
+    private static boolean isElevatorAboveArmCoralHolderClearance = false;
+    private static final BooleanPublisher isElevatorAboveArmCoralHolderClearancePublisher = robotStateTable.getBooleanTopic("IsElevatorAboveArmCoralHolderClearance").publish();
 
-    public static boolean getIsElevatorAboveArmClearance() {
-        return isElevatorAboveArmClearance;
+    public static boolean getIsElevatorAboveArmCoralHolderClearance() {
+        return isElevatorAboveArmCoralHolderClearance;
     }
 
-    public static void setIsElevatorAboveArmClearance(boolean value) {
-        if (isElevatorAboveArmClearance != value)
-            isElevatorAboveArmClearancePublisher.set(value);
-        isElevatorAboveArmClearance = value;
+    public static void setIsElevatorAboveArmCoralHolderClearance(boolean value) {
+        if (isElevatorAboveArmCoralHolderClearance != value)
+            isElevatorAboveArmCoralHolderClearancePublisher.set(value);
+        isElevatorAboveArmCoralHolderClearance = value;
     }
 
-    static { isElevatorAboveArmClearancePublisher.set(isElevatorAboveArmClearance); }
+    static { isElevatorAboveArmCoralHolderClearancePublisher.set(isElevatorAboveArmCoralHolderClearance); }
+
+
+    private static boolean isElevatorAboveArmFarNetClearance = false;
+    private static final BooleanPublisher isElevatorAboveArmFarNetClearancePublisher = robotStateTable.getBooleanTopic("IsElevatorAboveArmFarNetClearance").publish();
+
+    public static boolean getIsElevatorAboveArmFarNetClearance() {
+        return isElevatorAboveArmFarNetClearance;
+    }
+
+    public static void setIsElevatorAboveArmFarNetClearance(boolean value) {
+        if (isElevatorAboveArmFarNetClearance != value)
+            isElevatorAboveArmFarNetClearancePublisher.set(value);
+        isElevatorAboveArmFarNetClearance = value;
+    }
+
+    static { isElevatorAboveArmFarNetClearancePublisher.set(isElevatorAboveArmFarNetClearance); }
 
 
     private static boolean isArmPastFarNetClearance = false;
@@ -318,6 +429,22 @@ public class OurRobotState {
     }
 
     static { isArmPastFarNetClearancePublisher.set(isArmPastFarNetClearance); }
+
+
+    private static boolean isArmPastCoralHolderClearance = false;
+    private static final BooleanPublisher isArmPastCoralHolderClearancePublisher = robotStateTable.getBooleanTopic("IsArmPastCoralHolderClearance").publish();
+
+    public static boolean getIsArmPastCoralHolderClearance() {
+        return isArmPastCoralHolderClearance;
+    }
+
+    public static void setIsArmPastCoralHolderClearance(boolean value) {
+        if (value != isArmPastCoralHolderClearance)
+            isArmPastCoralHolderClearancePublisher.set(value);
+        isArmPastCoralHolderClearance = value;
+    }
+
+    static { isArmPastCoralHolderClearancePublisher.set(isArmPastCoralHolderClearance); }
 
 
     private static boolean isCoralHolderFirstSensorTripped = false;

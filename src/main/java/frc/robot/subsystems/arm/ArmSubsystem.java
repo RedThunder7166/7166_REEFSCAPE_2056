@@ -8,15 +8,21 @@ import static frc.robot.subsystems.arm.ArmConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.OurRobotState;
 import frc.robot.util.BeamBreakSensor;
+import frc.robot.util.GeneralUtils;
+import frc.robot.util.OptionalAngleSupplier;
 
 public class ArmSubsystem extends SubsystemBase {
     private final ArmIO m_io;
     private final ArmIOInputsAutoLogged m_inputs = new ArmIOInputsAutoLogged();
     public final BeamBreakSensor m_gripperSensor = new BeamBreakSensor(gripperSensorId, null);
+    private OptionalAngleSupplier m_manualPivotAngleSupplier = null;
 
     public ArmSubsystem(ArmIO io) {
         m_io = io.withGripperSensor(m_gripperSensor);
@@ -24,16 +30,54 @@ public class ArmSubsystem extends SubsystemBase {
         OurRobotState.addScoreMechanismStateChangeCallback(this::scoreMechanismStateChangeCallback);
     }
 
+    public void setManualPivotAngleSupplier(OptionalAngleSupplier supplier) {
+        m_manualPivotAngleSupplier = supplier;
+    }
+
     @Override
     public void periodic() {
+        if (m_manualPivotAngleSupplier != null) {
+            m_manualPivotAngleSupplier.getAsOptionalAngle().ifPresent((Angle angle) -> {
+                pivotGoAngle(angle).schedule();
+            });
+        }
+
         m_io.periodic();
         m_io.updateInputs(m_inputs);
 
         OurRobotState.setIsArmPastFarNetClearance(m_io.pivotIsAtOrPastPosition(pivotPositionFarNetClearance));
+        OurRobotState.setIsArmPastCoralHolderClearance(m_io.pivotIsAtOrPastPosition(pivotPositionCoralHolderClearance));
         // TODO: we probably only set this here when it's true; then, when we score a piece (press score button / set state / etc) it becomes false
         OurRobotState.setIsCoralInGripper(m_inputs.gripperSensorTripped);
 
         Logger.processInputs("ArmSubsystem", m_inputs);
+    }
+
+    public Command pivotGoPosition(double position) {
+        // final Command waitCommand =
+        //     position >= pivotPositionFarNetClearance ? Commands.waitUntil(OurRobotState::getIsElevatorAboveArmFarNetClearance) :
+        //     // Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsElevatorAboveArmFarNetClearance));
+        //     Commands.none();
+        final Command waitCommand = Commands.none();
+        return waitCommand.andThen(runOnce(() -> m_io.pivotGoPosition(position))
+            .until(() -> m_io.pivotIsAtPosition(position)));
+    }
+    public Command pivotGoAngle(Angle angle) {
+        return pivotGoPosition(pivotAngleToMechanismPosition(angle));
+    }
+
+    public Command gripperCoralOn() {
+        return runOnce(m_io::gripperCoralOn);
+    }
+    public Command gripperAlgaeOn() {
+        return runOnce(m_io::gripperAlgaeOn);
+    }
+
+    public Command gripperReverse() {
+        return runOnce(m_io::gripperReverse);
+    }
+    public Command gripperOff() {
+        return runOnce(m_io::gripperOff);
     }
 
     private void scoreMechanismStateChangeCallback() {
@@ -99,16 +143,5 @@ public class ArmSubsystem extends SubsystemBase {
                 m_io.pivotGoPosition(pivotPositionProcessor);
                 break;
         }
-    }
-
-    public Command gripperCoralOn() {
-        return runOnce(m_io::gripperCoralOn);
-    }
-    public Command gripperAlgaeOn() {
-        return runOnce(m_io::gripperAlgaeOn);
-    }
-
-    public Command gripperOff() {
-        return runOnce(m_io::gripperOff);
     }
 }

@@ -52,6 +52,8 @@ public class ElevatorIOReal implements ElevatorIO {
         leaderConfig.MotionMagic.MotionMagicCruiseVelocity = cruiseVelocity;
         leaderConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         leaderConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = positionMAX;
+        leaderConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        leaderConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = positionMIN;
 
         var followerConfig = new TalonFXConfiguration();
         followerConfig.MotorOutput.NeutralMode = neutralMode;
@@ -75,9 +77,9 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        BaseStatusSignal.refreshAll(m_leaderMotorPositionSignal, m_leaderMotorCurrentSignal, m_followerMotorPositionSignal, m_followerMotorCurrentSignal);
-
         inputs.targetMotorPositionRotations = m_motorTargetPosition;
+
+        BaseStatusSignal.refreshAll(m_leaderMotorPositionSignal, m_leaderMotorCurrentSignal, m_followerMotorPositionSignal, m_followerMotorCurrentSignal);
 
         final double leadMotorPositionRotations = m_leaderMotorPositionSignal.getValueAsDouble();
         inputs.leadMotorPositionRotations = leadMotorPositionRotations;
@@ -91,8 +93,7 @@ public class ElevatorIOReal implements ElevatorIO {
     }
 
     private void setControl(ControlRequest request) {
-        // FIXME: TEMPORARY
-        // m_leaderMotor.setControl(request);
+        m_leaderMotor.setControl(request);
     }
 
     @Override
@@ -107,6 +108,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void goPosition(double position) {
+        m_motorTargetPosition = position;
         setControl(m_positionRequest.withPosition(position));
     }
 
