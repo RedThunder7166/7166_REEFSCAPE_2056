@@ -17,6 +17,7 @@ import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
+import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import frc.robot.Constants;
@@ -28,6 +29,7 @@ public class ArmIOReal implements ArmIO {
     private final TalonFX m_gripperMotor = new TalonFX(gripperMotorId, Constants.CANBUS);
     private BeamBreakSensor m_gripperSensor;
     private boolean m_gripperSensorTripped = false;
+    private double m_gripperSensorTrippedTimestamp = 0d;
 
     private final StatusSignal<Angle> m_pivotMotorPositionSignal = m_pivotMotor.getPosition();
     private final StatusSignal<Current> m_pivotMotorCurrentSignal = m_pivotMotor.getSupplyCurrent();
@@ -41,6 +43,7 @@ public class ArmIOReal implements ArmIO {
     private final MotionMagicVoltage m_pivotPositionRequest = new MotionMagicVoltage(m_pivotMotorTargetPosition);
 
     private boolean m_gripperCoralOn = false;
+    private boolean m_gripperCoralOnReverse = false;
 
     public ArmIOReal() {
         var pivotConfig = new TalonFXConfiguration();
@@ -82,22 +85,35 @@ public class ArmIOReal implements ArmIO {
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
+        final boolean oldGripperSensorTripped = m_gripperSensorTripped;
+
         m_gripperSensorTripped = !m_gripperSensor.get();
         inputs.gripperSensorTripped = m_gripperSensorTripped;
+        if (!m_gripperSensorTripped)
+            m_gripperSensorTrippedTimestamp = 0d;
+        else if (!oldGripperSensorTripped)
+            m_gripperSensorTrippedTimestamp = MathSharedStore.getTimestamp();
 
         BaseStatusSignal.refreshAll(m_pivotMotorPositionSignal, m_pivotMotorCurrentSignal);
 
         final double pivotMotorPositionRotations = m_pivotMotorPositionSignal.getValueAsDouble();
+
         inputs.pivotMotorPositionRotations = pivotMotorPositionRotations;
         inputs.pivotMotorPositionDegrees = mechanismPositionToPivotAngle(pivotMotorPositionRotations).in(Degrees);
+
         inputs.pivotTargetMotorPositionRotations = m_pivotMotorTargetPosition;
+        inputs.pivotTargetMotorPositionDegrees = mechanismPositionToPivotAngle(m_pivotMotorTargetPosition).in(Degrees);
+
         inputs.pivotMotorCurrentAmps = m_pivotMotorCurrentSignal.getValueAsDouble();
     }
 
     @Override
     public void periodic() {
-        if (m_gripperCoralOn && m_gripperSensorTripped)
+        if (m_gripperCoralOn && m_gripperSensorTripped && (MathSharedStore.getTimestamp() - m_gripperSensorTrippedTimestamp >= 0.25d))
             gripperOff();
+        else if (m_gripperCoralOnReverse) {
+            m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(getGripperReverseOutput()));
+        }
     }
 
     @Override
@@ -118,6 +134,11 @@ public class ArmIOReal implements ArmIO {
     }
 
     @Override
+    public boolean pivotIsAtOrBeforePosition(double position) {
+        return (position - m_pivotMotorPositionSignal.getValueAsDouble()) >= pivotIsAtPositionThreshold;
+    }
+
+    @Override
     public void gripperCoralOn() {
         m_gripperCoralOn = true;
         m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperCoralOutput));
@@ -127,15 +148,24 @@ public class ArmIOReal implements ArmIO {
         m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperAlgaeOutput));
     }
 
+    private double getGripperReverseOutput() {
+        final double speedsX = OurRobotState.getDriveSpeedsX();
+        if (speedsX > 0)
+            return 0;
+
+        return speedsX;
+    }
+
     @Override
     public void gripperReverse() {
         m_gripperCoralOn = false;
-        m_gripperMotor.setControl(m_gripperDutyCycleRequest.withOutput(gripperReverseOutput));
+        m_gripperCoralOnReverse = true;
     }
 
     @Override
     public void gripperOff() {
         m_gripperCoralOn = false;
+        m_gripperCoralOnReverse = false;
         m_gripperMotor.setControl(m_neutralRequest);
     }
 }

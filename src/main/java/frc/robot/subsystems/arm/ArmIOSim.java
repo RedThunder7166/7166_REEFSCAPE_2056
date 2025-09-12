@@ -27,6 +27,7 @@ public class ArmIOSim implements ArmIO {
         inputs.pivotMotorPositionRotations = m_pivotTargetPosition;
         inputs.pivotMotorPositionDegrees = mechanismPositionToPivotAngle(m_pivotTargetPosition).in(Degrees);
         inputs.pivotTargetMotorPositionRotations = m_pivotTargetPosition;
+        inputs.pivotTargetMotorPositionDegrees = mechanismPositionToPivotAngle(m_pivotTargetPosition).in(Degrees);
     }
 
     @Override

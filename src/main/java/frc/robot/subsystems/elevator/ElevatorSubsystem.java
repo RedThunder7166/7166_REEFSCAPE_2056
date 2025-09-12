@@ -35,22 +35,24 @@ public class ElevatorSubsystem extends SubsystemBase {
     public void periodic() {
         if (m_manualTargetDistanceSupplier != null) {
             m_manualTargetDistanceSupplier.getAsOptionalDistance().ifPresent((Distance distance) -> {
-                goDistance(distance).schedule();;
+                goDistance(distance).schedule();
             });
         }
 
         m_io.updateInputs(m_inputs);
+        OurRobotState.setIsElevatorAboveArmFarNetClearance(m_io.isAtOrAbovePosition(positionArmFarNetClearance));
         OurRobotState.setIsElevatorAboveArmCoralHolderClearance(m_io.isAtOrAbovePosition(positionArmCoralHolderClearance));
 
         Logger.processInputs("ElevatorSubsystem", m_inputs);
     }
 
     public Command goPosition(double position) {
-        // final Command waitCommand =
-        //     position <= positionArmCoralHolderClearance ? Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsArmPastCoralHolderClearance)) :
-        //     position <= positionArmFarNetClearance ? Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsArmPastFarNetClearance)) :
-        //     Commands.none();
-        final Command waitCommand = Commands.none();
+        final Command waitCommand =
+            // position <= positionArmCoralHolderClearance ? Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsArmPastCoralHolderClearance)) :
+            position <= positionArmCoralHolderClearance ? Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsArmWithinCoralHolderRange)) :
+            position <= positionArmFarNetClearance ? Commands.waitUntil(GeneralUtils.negateBooleanSupplier(OurRobotState::getIsArmPastFarNetClearance)) :
+            Commands.none();
+        // final Command waitCommand = Commands.none();
         return waitCommand.andThen(runOnce(() -> m_io.goPosition(position))
             .until(() -> m_io.isAtPosition(position)));
     }
@@ -61,54 +63,54 @@ public class ElevatorSubsystem extends SubsystemBase {
     private void scoreMechanismStateChangeCallback() {
         switch (OurRobotState.getScoreMechanismState()) {
             case HOME:
-                m_io.goPosition(positionHome);
+                goPosition(positionHome).schedule();
                 break;
             case CORAL_INTAKE:
             // case CORAL_LOADED:
                 break;
 
             case CORAL_SCORE_L1:
-                m_io.goPosition(positionL1Coral);
+                goPosition(positionL1Coral).schedule();
                 break;
             case CORAL_SCORING_L1:
-                m_io.goPosition(positionL1CoralScore);
+                goPosition(positionL1CoralScore).schedule();
                 break;
             case CORAL_SCORE_L2:
-                m_io.goPosition(positionL2Coral);
+                goPosition(positionL2Coral).schedule();
                 break;
             case CORAL_SCORING_L2:
-                m_io.goPosition(positionL2CoralScore);
+                goPosition(positionL2CoralScore).schedule();
                 break;
             case CORAL_SCORE_L3:
-                m_io.goPosition(positionL3Coral);
+                goPosition(positionL3Coral).schedule();
                 break;
             case CORAL_SCORING_L3:
-                m_io.goPosition(positionL3CoralScore);
+                goPosition(positionL3CoralScore).schedule();
                 break;
             case CORAL_SCORE_L4:
-                m_io.goPosition(positionL4Coral);
+                goPosition(positionL4Coral).schedule();
                 break;
             case CORAL_SCORING_L4:
-                m_io.goPosition(positionL4CoralScore);
+                goPosition(positionL4CoralScore).schedule();
                 break;
 
             case ALGAE_PICKUP_FLOOR:
-                m_io.goPosition(positionFloorAlgae);
+                goPosition(positionFloorAlgae).schedule();
                 break;
             case ALGAE_PICKUP_L2:
-                m_io.goPosition(positionL2Algae);
+                goPosition(positionL2Algae).schedule();
                 break;
             case ALGAE_PICKUP_L3:
-                m_io.goPosition(positionL3Algae);
+                goPosition(positionL3Algae).schedule();
                 break;
             case ALGAE_HOME:
-                m_io.goPosition(positionAlgaeHome);
+                goPosition(positionAlgaeHome).schedule();
                 break;
             case ALGAE_SCORE_NET:
-                m_io.goPosition(positionNet);
+                goPosition(positionNet).schedule();
                 break;
             case ALGAE_SCORE_PROCESSOR:
-                m_io.goPosition(positionProcessor);
+                goPosition(positionProcessor).schedule();
                 break;
 
             case ALGAE_SCORING_NET:

@@ -5,7 +5,6 @@
 package frc.robot.subsystems.elevator;
 
 import static edu.wpi.first.units.Units.Inches;
-import static frc.robot.subsystems.arm.ArmConstants.pivotIsAtPositionThreshold;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -78,6 +77,7 @@ public class ElevatorIOReal implements ElevatorIO {
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.targetMotorPositionRotations = m_motorTargetPosition;
+        inputs.targetMotorPositionInches = mechanismPositionToDistance(m_motorTargetPosition).in(Inches);
 
         BaseStatusSignal.refreshAll(m_leaderMotorPositionSignal, m_leaderMotorCurrentSignal, m_followerMotorPositionSignal, m_followerMotorCurrentSignal);
 
@@ -98,7 +98,6 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void periodic() {
-        setControl(m_neutralRequest);
     }
 
     @Override
@@ -119,6 +118,6 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public boolean isAtOrAbovePosition(double position) {
-        return (m_leaderMotorPositionSignal.getValueAsDouble() - position) >= pivotIsAtPositionThreshold;
+        return (m_leaderMotorPositionSignal.getValueAsDouble() - position) >= isAtPositionThreshold;
     }
 }

@@ -46,12 +46,12 @@ public class Controls {
 
     private static final Trigger coralIntakeTrigger = intakeDeployButton.and(OurRobotState.isClimbOutTrigger.negate());
 
-    public static final Trigger deployIntake = coralIntakeTrigger.and(OurRobotState.isCoralInBotHolder.negate());
+    public static final Trigger deployIntake = coralIntakeTrigger.and(OurRobotState.isCoralInHolderTrigger.negate());
     public static final Trigger retractIntake = controller.leftBumper();
 
     public static final Trigger intakePurge = controller.povDown(); // top left paddle
 
-    public static final Trigger grabCoral = coralIntakeTrigger.and(OurRobotState.isCoralInBotHolder);
+    public static final Trigger grabCoral = coralIntakeTrigger.and(OurRobotState.isCoralInHolderTrigger);
 
     public static final Trigger deployClimb = intakeDeployButton.and(climbButton);
 }

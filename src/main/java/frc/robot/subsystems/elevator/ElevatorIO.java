@@ -6,6 +6,7 @@ public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
         double targetMotorPositionRotations;
+        double targetMotorPositionInches;
 
         double leadMotorPositionRotations;
         double leadMotorPositionInches;

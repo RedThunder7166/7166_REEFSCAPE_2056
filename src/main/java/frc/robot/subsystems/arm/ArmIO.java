@@ -10,6 +10,7 @@ public interface ArmIO {
         double pivotMotorPositionRotations;
         double pivotMotorPositionDegrees;
         double pivotTargetMotorPositionRotations;
+        double pivotTargetMotorPositionDegrees;
         double pivotMotorCurrentAmps;
 
         boolean gripperSensorTripped;
@@ -24,6 +25,7 @@ public interface ArmIO {
 
     public default boolean pivotIsAtPosition(double position) { return false; }
     public default boolean pivotIsAtOrPastPosition(double position) { return false; }
+    public default boolean pivotIsAtOrBeforePosition(double position) { return false; }
 
     public default void gripperCoralOn() { }
     public default void gripperAlgaeOn() { }

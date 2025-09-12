@@ -30,6 +30,7 @@ public class StraightenatorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         m_io.periodic();
+
         if (m_inputs.firstSensorTripped && OurRobotState.getScoreMechanismState() == ScoreMechanismState.CORAL_INTAKE)
             m_io.off();
 

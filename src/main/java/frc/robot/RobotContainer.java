@@ -153,7 +153,8 @@ public class RobotContainer {
         autoChooser.addOption(
                 "Drive SysId (Dynamic Reverse)", m_drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-        // Configure the button bindings
+        OurRobotState.initialize(m_drive);
+
         configureButtonBindings();
     }
 
@@ -253,8 +254,8 @@ public class RobotContainer {
         // if (Constants.currentMode == Mode.SIM) {
             CommandXboxController secondaryController = new CommandXboxController(2);
 
-            secondaryController.a()
-                .onTrue(m_armSubsystem.m_gripperSensor.toggleCommand());
+            // secondaryController.a()
+            //     .onTrue(m_armSubsystem.m_gripperSensor.toggleCommand());
 
             // secondaryController.x()
             //     .onTrue(m_straightenatorSubsystem.m_firstSensor.toggleCommand());

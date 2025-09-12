@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.arm.ArmSubsystem;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
 
@@ -169,87 +170,16 @@ public class OurRobotState {
             setScoreMechanismState(targetState);
         });
 
-    public static void setupSubsystems(ElevatorSubsystem elevatorSubsystem, ArmSubsystem armSubsystem) {
-        scoreMechanismStateChangeCallbackList.add(() -> {
-            Command elevatorCommand = null;
-            Command armCommand = null;
-            switch (OurRobotState.getScoreMechanismState()) {
-                case HOME:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionHome);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionGrab)
-                        .alongWith(armSubsystem.gripperOff());
-                    break;
-                case CORAL_INTAKE:
-                // case CORAL_LOADED:
-                    armCommand = armSubsystem.gripperOff();
-                    break;
+    private static Drive m_driveSubsystem = null;
 
-                case CORAL_SCORE_L1:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL1Coral);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL1Coral);
-                    break;
-                case CORAL_SCORING_L1:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL1CoralScore);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL1CoralScore)
-                        .alongWith(armSubsystem.gripperReverse());
-                    break;
-                case CORAL_SCORE_L2:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2Coral);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL2Coral);
-                    break;
-                case CORAL_SCORING_L2:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2CoralScore);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL2CoralScore)
-                        .alongWith(armSubsystem.gripperReverse());
-                    break;
-                case CORAL_SCORE_L3:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3Coral);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL3Coral);
-                    break;
-                case CORAL_SCORING_L3:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3CoralScore);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL3CoralScore)
-                        .alongWith(armSubsystem.gripperReverse());
-                    break;
-                case CORAL_SCORE_L4:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL4Coral);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL4Coral);
-                    break;
-                case CORAL_SCORING_L4:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL4CoralScore);
-                    armCommand = armSubsystem.pivotGoPosition(ArmConstants.pivotPositionL4CoralScore)
-                        .alongWith(armSubsystem.gripperReverse());
-                    break;
+    public static void initialize(Drive driveSubsystem) {
+        setScoreMechanismState(scoreMechanismState); // call all callbacks
 
-                case ALGAE_PICKUP_FLOOR:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionFloorAlgae);
-                    break;
-                case ALGAE_PICKUP_L2:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL2Algae);
-                    break;
-                case ALGAE_PICKUP_L3:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionL3Algae);
-                    break;
-                case ALGAE_HOME:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionAlgaeHome);
-                    break;
-                case ALGAE_SCORE_NET:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionNet);
-                    break;
-                case ALGAE_SCORE_PROCESSOR:
-                    elevatorCommand = elevatorSubsystem.goPosition(ElevatorConstants.positionProcessor);
-                    break;
-    
-                case ALGAE_SCORING_NET:
-                case ALGAE_SCORING_PROCESSOR:
-                    break;
-            }
+        m_driveSubsystem = driveSubsystem;
+    }
 
-            if (elevatorCommand != null)
-                elevatorCommand.schedule();
-            else if (armCommand != null)
-                armCommand.schedule();
-        });
+    public static double getDriveSpeedsX() {
+        return m_driveSubsystem.getChassisSpeeds().vxMetersPerSecond;
     }
 
 
@@ -306,7 +236,7 @@ public class OurRobotState {
 
     private static boolean isCoralInHolder = false;
     private static final BooleanPublisher isCoralInHolderPublisher = robotStateTable.getBooleanTopic("IsCoralInHolder").publish();
-    public static final Trigger isCoralInBotHolder = new Trigger(OurRobotState::getIsCoralInHolder);
+    public static final Trigger isCoralInHolderTrigger = new Trigger(OurRobotState::getIsCoralInHolder);
 
     public static boolean getIsCoralInHolder() {
         return isCoralInHolder;
@@ -445,6 +375,22 @@ public class OurRobotState {
     }
 
     static { isArmPastCoralHolderClearancePublisher.set(isArmPastCoralHolderClearance); }
+
+
+    private static boolean isArmWithinCoralHolderRange = false;
+    private static final BooleanPublisher isArmWithinCoralHolderRangePublisher = robotStateTable.getBooleanTopic("IsArmWithinCoralHolderRange").publish();
+
+    public static boolean getIsArmWithinCoralHolderRange() {
+        return isArmWithinCoralHolderRange;
+    }
+
+    public static void setIsArmWithinCoralHolderRange(boolean value) {
+        if (value != isArmWithinCoralHolderRange)
+            isArmWithinCoralHolderRangePublisher.set(value);
+        isArmWithinCoralHolderRange = value;
+    }
+
+    static { isArmWithinCoralHolderRangePublisher.set(isArmWithinCoralHolderRange); }
 
 
     private static boolean isCoralHolderFirstSensorTripped = false;

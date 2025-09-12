@@ -14,6 +14,7 @@ public class ElevatorIOSim implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         // :(
         inputs.targetMotorPositionRotations = m_targetPosition;
+        inputs.leadMotorPositionInches = mechanismPositionToDistance(m_targetPosition).in(Inches);
 
         inputs.leadMotorPositionRotations = m_targetPosition;
         inputs.leadMotorPositionInches = mechanismPositionToDistance(m_targetPosition).in(Inches);
